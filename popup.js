@@ -1,6 +1,26 @@
 // Snag our button
 
+
 let btn = document.getElementById("download")
+
+document.addEventListener('DOMContentLoaded', async () => {
+    let [tab] = await chrome.tabs.query({active: true, currentWindow:true}) // Find current tab
+    let domain = new URL(tab.url);
+    let label = document.getElementById('label')
+    label.innerText = domain.hostname;
+
+    if (domain.hostname != 'bid-it.appspot.com'){
+        let img = document.getElementById('validate');
+        img.src = 'invalid.png';
+
+        let btn = document.getElementById('download');
+        btn.disabled = true;
+    }
+    });
+
+
+
+
 
 function pass_localstorage(){
     let biditDisplaySettingsCookie = localStorage.biditDisplaySettingsCookie;
@@ -87,5 +107,8 @@ btn.addEventListener("click", async () => {
     parse_bidit_storage(script_[0].result)
 
 })
+
+
+
 
 
