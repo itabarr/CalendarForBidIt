@@ -7,13 +7,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     label.innerText = domain.hostname;
 
     if (domain.hostname != 'bid-it.appspot.com'){
-        let img = document.getElementById('validate');
-        img.src = 'invalid.png';
+        let label = document.getElementById('label')
+        label.innerText = "Downloading calendar is not available because you're not in the Bid-It website."
 
         let btn = document.getElementById('download');
         btn.disabled = true;
     }
+    else{
+        let label = document.getElementById('label')
+        label.innerText = "Great! You're in the Bid-It website. You can download your calendar if you wish."
+
+        let btn = document.getElementById('download');
+        btn.disabled = false;
+    }
     });
+
+
+
 
 function pass_localstorage(){
     let biditDisplaySettingsCookie = localStorage.biditDisplaySettingsCookie;
@@ -54,11 +64,6 @@ function parse_bidit_storage(biditDisplaySettingsCookie){
         let arr_ = Array.from({length: num_of_tests}, (v, i) => i);
 
 
-
-
-
-
-
         for (const i in arr_){
             start_str = (course.startMoedHours[i]);
             start_int = parseInt(start_str.substring(0,2));
@@ -88,7 +93,6 @@ function parse_bidit_storage(biditDisplaySettingsCookie){
 
             console.log(test_event);
             cal.addEvent(  'מועד ' + test_event.Moed +' '+ test_event.Name, test_event.Moed  , "", formatted_start ,formatted_end);
-
 
         }
 
