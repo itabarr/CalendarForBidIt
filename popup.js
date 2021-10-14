@@ -108,6 +108,8 @@ function parse_bidit_storage(result){
                 let arr = Array.from({length: num_of_days}, (v, i) => i);
                 for (const i in arr){
 
+                    another_info = get_another_info(JSON.parse(result.biditScheduleInfoCookie) , course.cNum , group.gNum);
+
                     course_event = {
                         Name: course.cName,
                         Type: group.ofenHoraa,
@@ -115,6 +117,7 @@ function parse_bidit_storage(result){
                         StartHour: group.startHours[i],
                         EndHour: group.endHours[i],
                         Location: group.places[i],
+                        Lecturer: another_info.lecturer,
                     };
 
                     let formatted_start = `10/09/2021 ${course_event.StartHour}`
@@ -124,7 +127,7 @@ function parse_bidit_storage(result){
 
                     //{freq: 'WEEKLY', interval: 1, byday: [course_event.Day] }
 
-                    cal.addEvent(course_event.Name, course_event.Type, course_event.Location, formatted_start ,formatted_end,{freq: 'WEEKLY', interval: 1, byday: [course_event.Day] , until:'01/09/2022'});
+                    cal.addEvent(course_event.Name, course_event.Lecturer +' '+ course_event.Type, course_event.Location, formatted_start ,formatted_end,{freq: 'WEEKLY', interval: 1, byday: [course_event.Day] , until:'01/09/2022'});
                 };
             };
 
