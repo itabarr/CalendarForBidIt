@@ -22,9 +22,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     });
 
-
-
-
 function pass_localstorage(){
     let biditDisplaySettingsCookie = localStorage.biditDisplaySettingsCookie;
     return biditDisplaySettingsCookie
@@ -113,8 +110,8 @@ function parse_bidit_storage(biditDisplaySettingsCookie){
                         Location: group.places[i],
                     };
 
-                    let formatted_start = `09/10/2021 ${course_event.StartHour}`
-                    let formatted_end = `09/10/2021  ${course_event.EndHour}`
+                    let formatted_start = `10/09/2021 ${course_event.StartHour}`
+                    let formatted_end = `10/09/2021  ${course_event.EndHour}`
 
 
 
@@ -129,6 +126,19 @@ function parse_bidit_storage(biditDisplaySettingsCookie){
     var d = new Date();
     cal.download(d.toISOString())
 }
+
+
+///TODO: first day of class to fix initial day probelm
+function get_first_day_of_class(first_day_of_school){
+    return first_day_of_class_string
+}
+
+///TODO: get_another_info (lecterers,other..)
+function get_another_info(course_id,group_id){
+
+    return info_json
+}
+
 
 // Run on click
 btn.addEventListener("click", async () => {
