@@ -24,7 +24,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function pass_localstorage(){
     let biditDisplaySettingsCookie = localStorage.biditDisplaySettingsCookie;
-    return biditDisplaySettingsCookie
+    let biditScheduleInfoCookie = localStorage.biditScheduleInfoCookie
+
+    return localStorage_json = {
+        biditDisplaySettingsCookie : biditDisplaySettingsCookie,
+        biditScheduleInfoCookie : biditScheduleInfoCookie
+    }
 }
 
 function format_days(day){
@@ -47,10 +52,12 @@ function format_days(day){
             throw('It seems like BidIt used incorrect day format. The day format is: ' + day);
     }
 }
-function parse_bidit_storage(biditDisplaySettingsCookie){
+
+///TODO: implement get_another_info_data
+function parse_bidit_storage(result){
     let cal = ics();
 
-    let data_ = JSON.parse(biditDisplaySettingsCookie)[0];
+    let data_ = JSON.parse(result.biditDisplaySettingsCookie)[0];
     console.log(Object.keys(data_));
 
     for (const course_key in data_){
@@ -130,13 +137,47 @@ function parse_bidit_storage(biditDisplaySettingsCookie){
 
 ///TODO: first day of class to fix initial day probelm
 function get_first_day_of_class(first_day_of_school){
+
     return first_day_of_class_string
 }
 
-///TODO: get_another_info (lecterers,other..)
-function get_another_info(course_id,group_id){
+function get_another_info(bid_it_json,course_id,group_id){
+    courses = bid_it_json[0];
+    num_of_courses = courses.length;
+    let courses_index_array = Array.from({length: num_of_courses}, (v, i) => i);
 
-    return info_json
+    for (const i in courses_index_array){
+        course = courses[i];
+
+        if (course.cNum == course_id){
+            groups = course.kvutzaData
+
+            num_of_groups = groups.length;
+            let groups_index_array = Array.from({length: num_of_groups}, (v, i) => i);
+
+            for (const i in groups_index_array) {
+                group = groups[i];
+
+                if (group.gNum == group_id){
+
+                    let info_json = {
+                        havura : group.havura,
+                        kind: group.kind,
+                        lecturer: group.lecturer[0]
+                    }
+                    console.log(info_json);
+
+                    return info_json
+
+                }
+            }
+        }
+    }
+
+    console.log('Didnt find anything');
+    return
+
+
 }
 
 
@@ -150,6 +191,7 @@ btn.addEventListener("click", async () => {
     });
     parse_bidit_storage(script_[0].result)
 
+    get_another_info(JSON.parse(script_[0].result.biditScheduleInfoCookie), "05091834" , '04');
 })
 
 
