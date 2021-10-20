@@ -21,6 +21,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.disabled = false;
     }
     });
+btn.addEventListener("click", async () => {
+    let [tab] = await chrome.tabs.query({active: true, currentWindow:true}) // Find current tab
+
+    const script_ = await chrome.scripting.executeScript({ // Run the following script on our tab
+        target: {tabId: tab.id},
+        func: pass_localstorage
+    });
+    main(script_[0].result)
+
+    get_another_info(JSON.parse(script_[0].result.biditScheduleInfoCookie), "05091834" , '04');
+})
 
 function pass_localstorage(){
     let biditDisplaySettingsCookie = localStorage.biditDisplaySettingsCookie;
@@ -31,8 +42,7 @@ function pass_localstorage(){
         biditScheduleInfoCookie : biditScheduleInfoCookie
     }
 }
-
-function format_days(day){
+function format_days_to_string(day){
     switch (day) {
         case 'א':
             return 'SU';
@@ -52,13 +62,94 @@ function format_days(day){
             throw('It seems like BidIt used incorrect day format. The day format is: ' + day);
     }
 }
+function format_days_to_int(day){
+    switch (day) {
+        case 'א':
+            return 7;
+        case 'ב':
+            return 1;
+        case 'ג':
+            return 2;
+        case 'ד':
+            return 3;
+        case 'ה':
+            return 4;
+        case 'ו':
+            return 5;
+        case 'ז':
+            return 6;
+        default:
+            throw('It seems like BidIt used incorrect day format. The day format is: ' + day);
+    }
+}
+Date.prototype.addDays = function(days) {
+    var date = new Date(this.valueOf());
+    date.setDate(date.getDate() + days);
+    return date;
+}
+function get_first_day_of_course(first_day_of_school_string, course_day_of_the_week_hebrew){
+    wanted_day_int = format_days_to_int(course_day_of_the_week_hebrew);
 
-///TODO: implement get_another_info_data
-function parse_bidit_storage(result){
+    d = new Date()
+    month =parseInt(first_day_of_school_string.split('/')[0]);
+    date = parseInt(first_day_of_school_string.split('/')[1]);
+    year =  parseInt(first_day_of_school_string.split('/')[2]);
+    d.setFullYear(year,month-1,date)
+
+    current_day = d.getDay()
+
+    days_diff = current_day - wanted_day_int -1
+
+    d = d.addDays(days_diff)
+
+    return d.toLocaleDateString()
+
+}
+function get_another_info(bid_it_json,course_id,group_id){
+    courses = bid_it_json[0];
+    num_of_courses = courses.length;
+    let courses_index_array = Array.from({length: num_of_courses}, (v, i) => i);
+
+    for (const i in courses_index_array){
+        course = courses[i];
+
+        if (course.cNum == course_id){
+            groups = course.kvutzaData
+
+            num_of_groups = groups.length;
+            let groups_index_array = Array.from({length: num_of_groups}, (v, i) => i);
+
+            for (const i in groups_index_array) {
+                group = groups[i];
+
+                if (group.gNum == group_id){
+
+                    let info_json = {
+                        havura : group.havura,
+                        kind: group.kind,
+                        lecturer: group.lecturer[0]
+                    }
+                    //console.log(info_json);
+
+                    return info_json
+
+                }
+            }
+        }
+    }
+
+    console.log('Didnt find anything');
+    return
+
+
+}
+
+///TODO: add course number and group
+function main(result){
     let cal = ics();
 
     let data_ = JSON.parse(result.biditDisplaySettingsCookie)[0];
-    console.log(Object.keys(data_));
+    //console.log(Object.keys(data_));
 
     for (const course_key in data_){
         let course = data_[course_key]
@@ -95,7 +186,7 @@ function parse_bidit_storage(result){
             test_event.formatted_start = formatted_start;
             test_event.formatted_end = formatted_end;
 
-            console.log(test_event);
+            //console.log(test_event);
             cal.addEvent(  'מועד ' + test_event.Moed +' '+ test_event.Name, test_event.Moed  , "", formatted_start ,formatted_end);
 
         }
@@ -113,17 +204,18 @@ function parse_bidit_storage(result){
                     course_event = {
                         Name: course.cName,
                         Type: group.ofenHoraa,
-                        Day: format_days(group.daysArr[i]),
+                        Day: format_days_to_string(group.daysArr[i]),
                         StartHour: group.startHours[i],
                         EndHour: group.endHours[i],
                         Location: group.places[i],
                         Lecturer: another_info.lecturer,
                     };
 
-                    let formatted_start = `10/09/2021 ${course_event.StartHour}`
-                    let formatted_end = `10/09/2021  ${course_event.EndHour}`
+                    first_day_of_course = get_first_day_of_course('10/09/2021',group.daysArr[i])
+                    let formatted_start = `${first_day_of_course} ${course_event.StartHour}`
+                    let formatted_end = `${first_day_of_course} ${course_event.EndHour}`
 
-
+                    console.log(get_first_day_of_course('10/09/2021',group.daysArr[i]))
 
                     //{freq: 'WEEKLY', interval: 1, byday: [course_event.Day] }
 
@@ -137,65 +229,6 @@ function parse_bidit_storage(result){
     cal.download(d.toISOString())
 }
 
-
-///TODO: first day of class to fix initial day probelm
-function get_first_day_of_class(first_day_of_school){
-
-    return first_day_of_class_string
-}
-
-function get_another_info(bid_it_json,course_id,group_id){
-    courses = bid_it_json[0];
-    num_of_courses = courses.length;
-    let courses_index_array = Array.from({length: num_of_courses}, (v, i) => i);
-
-    for (const i in courses_index_array){
-        course = courses[i];
-
-        if (course.cNum == course_id){
-            groups = course.kvutzaData
-
-            num_of_groups = groups.length;
-            let groups_index_array = Array.from({length: num_of_groups}, (v, i) => i);
-
-            for (const i in groups_index_array) {
-                group = groups[i];
-
-                if (group.gNum == group_id){
-
-                    let info_json = {
-                        havura : group.havura,
-                        kind: group.kind,
-                        lecturer: group.lecturer[0]
-                    }
-                    console.log(info_json);
-
-                    return info_json
-
-                }
-            }
-        }
-    }
-
-    console.log('Didnt find anything');
-    return
-
-
-}
-
-
-// Run on click
-btn.addEventListener("click", async () => {
-    let [tab] = await chrome.tabs.query({active: true, currentWindow:true}) // Find current tab
-
-    const script_ = await chrome.scripting.executeScript({ // Run the following script on our tab
-        target: {tabId: tab.id},
-        func: pass_localstorage
-    });
-    parse_bidit_storage(script_[0].result)
-
-    get_another_info(JSON.parse(script_[0].result.biditScheduleInfoCookie), "05091834" , '04');
-})
 
 
 
