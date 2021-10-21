@@ -143,8 +143,19 @@ function get_another_info(bid_it_json,course_id,group_id){
 
 
 }
+function phrase_description_message(course_name,course_num, course_group, course_type, course_location, course_lecturer){
+    course_name_str = `שם קורס: ${course_name} \\n`
+    course_num_str = `מספר קורס: ${course_num} \\n`
+    course_group_str = `מספר קבוצה: ${course_group} \\n`
+    course_type_str = `סוג שיעור: ${course_type} \\n`
+    course_lecturer_str = `מרצה: ${course_lecturer} \\n`
+    course_location_str = `מיקום: ${course_location} \\n`
 
-///TODO: add course number and group
+    return course_name_str+course_num_str+course_group_str+course_type_str+course_lecturer_str+course_location_str
+
+}
+
+//TODO: add updated time from university site
 function main(result){
     let cal = ics();
 
@@ -203,6 +214,8 @@ function main(result){
 
                     course_event = {
                         Name: course.cName,
+                        Num: course.cNum,
+                        Group: group.gNum,
                         Type: group.ofenHoraa,
                         Day: format_days_to_string(group.daysArr[i]),
                         StartHour: group.startHours[i],
@@ -215,11 +228,12 @@ function main(result){
                     let formatted_start = `${first_day_of_course} ${course_event.StartHour}`
                     let formatted_end = `${first_day_of_course} ${course_event.EndHour}`
 
-                    console.log(get_first_day_of_course('10/09/2021',group.daysArr[i]))
+                    description_str = phrase_description_message(course_event.Name,course_event.Num ,course_event.Group, course_event.Type , course_event.Location , course_event.Lecturer)
+                    console.log(description_str)
 
-                    //{freq: 'WEEKLY', interval: 1, byday: [course_event.Day] }
+                    //console.log(get_first_day_of_course('10/09/2021',group.daysArr[i]))
 
-                    cal.addEvent(course_event.Name, course_event.Lecturer +' '+ course_event.Type, course_event.Location, formatted_start ,formatted_end,{freq: 'WEEKLY', interval: 1, byday: [course_event.Day] , until:'01/09/2022'});
+                    cal.addEvent(course_event.Name, description_str, course_event.Location, formatted_start ,formatted_end,{freq: 'WEEKLY', interval: 1, byday: [course_event.Day] , until:'01/09/2022'});
                 };
             };
 
