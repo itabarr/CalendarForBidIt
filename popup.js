@@ -1,4 +1,6 @@
-let btn = document.getElementById("download")
+//TODO: refactor, add second semester & automatic main days (first day of semester etc.) the info is in the global vars of bidit site
+//TODO: future thoughts - add validation check for bidit hours/places (each day?) maybe needs to use server/scraper.
+
 
 document.addEventListener('DOMContentLoaded', async () => {
     let [tab] = await chrome.tabs.query({active: true, currentWindow:true}) // Find current tab
@@ -21,6 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.disabled = false;
     }
     });
+let btn = document.getElementById("download")
 btn.addEventListener("click", async () => {
     let [tab] = await chrome.tabs.query({active: true, currentWindow:true}) // Find current tab
 
@@ -150,12 +153,8 @@ function phrase_description_message(course_name,course_num, course_group, course
     course_type_str = `סוג שיעור: ${course_type} \\n`
     course_lecturer_str = `מרצה: ${course_lecturer} \\n`
     course_location_str = `מיקום: ${course_location} \\n`
-
     return course_name_str+course_num_str+course_group_str+course_type_str+course_lecturer_str+course_location_str
-
 }
-
-//TODO: add updated time from university site
 function main(result){
     let cal = ics();
 
@@ -242,6 +241,7 @@ function main(result){
     var d = new Date();
     cal.download(d.toISOString())
 }
+
 
 
 

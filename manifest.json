@@ -1,18 +1,14 @@
 {
-  "name": "Comic Sans transformer",
-  "description": "Transforms all text on a page into Comic Sans",
+  "name": "CalendarForBidIt",
+  "description": "Download bid-it calendar as .ics file.",
   "version": "1.0",
   "manifest_version": 3,
-  "background": {
-    "service_worker": "background.js"
-  },
   "permissions": ["storage", "activeTab", "scripting","tabs","cookies"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": "icon.png"
   },
   "web_accessible_resources": [{
-    "resources": ["valid.png", "invalid.png"],
     "matches": ["<all_urls>"]
   }]
 }
