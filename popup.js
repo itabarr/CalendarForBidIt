@@ -1,5 +1,7 @@
-//TODO: refactor, add second semester & automatic main days (first day of semester etc.) the info is in the global vars of bidit site
-//TODO: future thoughts - add validation check for bidit hours/places (each day?) maybe needs to use server/scraper.
+//TODO: (1) add second semester & automatic main days (first day of semester etc.) the info is in the global vars of bidit site (bidit_globals.g_metaDatesDS.metaNames.flat() + bidit_globals.g_metaDatesDS.metaDates )
+//TODO: (1) add no events validation/notification (only tests?)
+//TODO: (2) refactor + publish
+//TODO: (3) future thoughts - add validation check for bidit hours/places (each day?) maybe needs to use server/scraper.
 
 
 document.addEventListener('DOMContentLoaded', async () => {
