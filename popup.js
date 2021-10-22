@@ -157,6 +157,8 @@ function phrase_description_message(course_name,course_num, course_group, course
     course_location_str = `מיקום: ${course_location} \\n`
     return course_name_str+course_num_str+course_group_str+course_type_str+course_lecturer_str+course_location_str
 }
+
+//TODO: fix document query
 async function get_updated_data_from_tau_site(course_number, course_group,year){
     const response = await fetch(`https://www.ims.tau.ac.il/Tal/Syllabus/Syllabus_L.aspx?course=${course_number}${course_group}&year=${year}}`);
     const reader = response.body.getReader();
@@ -170,7 +172,21 @@ async function get_updated_data_from_tau_site(course_number, course_group,year){
     page = new TextDecoder().decode(undecoded_page)
 
     var doc = new DOMParser().parseFromString(page,'text/html');
-    return doc
+
+    location = doc.querySelector('#div_data > div.data-table-row.course-time-location > div:nth-child(6) > span').innerText;
+    room = doc.querySelector('#div_data > div.data-table-row.course-time-location > div:nth-child(7) > span').innerText;
+    time = doc.querySelector('#div_data > div.data-table-row.course-time-location > div:nth-child(5) > span').innerText;
+    url = `https://www.ims.tau.ac.il/Tal/Syllabus/Syllabus_L.aspx?course=${course_number}${course_group}&year=${year}}`;
+
+    course_updated_data = {
+        start_time: time.split('-')[0],
+        end_time: time.split('-')[0],
+        room: room,
+        location: location,
+        url: url
+    }
+
+    return course_updated_data
 }
 function main(result){
     let cal = ics();
@@ -227,6 +243,7 @@ function main(result){
                 for (const i in arr){
 
                     another_info = get_another_info(JSON.parse(result.biditScheduleInfoCookie) , course.cNum , group.gNum);
+                    course_updated_data = get_updated_data_from_tau_site(course.cNum, group.gNum, '2021');
 
                     course_event = {
                         Name: course.cName,
@@ -239,6 +256,8 @@ function main(result){
                         Location: group.places[i],
                         Lecturer: another_info.lecturer,
                     };
+
+                    console.log(course_event, course_updated_data , another_info)
 
                     first_day_of_course = get_first_day_of_course('10/09/2021',group.daysArr[i])
                     let formatted_start = `${first_day_of_course} ${course_event.StartHour}`
