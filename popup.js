@@ -157,6 +157,21 @@ function phrase_description_message(course_name,course_num, course_group, course
     course_location_str = `מיקום: ${course_location} \\n`
     return course_name_str+course_num_str+course_group_str+course_type_str+course_lecturer_str+course_location_str
 }
+async function get_updated_data_from_tau_site(course_number, course_group,year){
+    const response = await fetch(`https://www.ims.tau.ac.il/Tal/Syllabus/Syllabus_L.aspx?course=${course_number}${course_group}&year=${year}}`);
+    const reader = response.body.getReader();
+    let undecoded_page;
+    while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        undecoded_page = value;
+    }
+    console.log('Page Received');
+    page = new TextDecoder().decode(undecoded_page)
+
+    var doc = new DOMParser().parseFromString(page,'text/html');
+    return doc
+}
 function main(result){
     let cal = ics();
 

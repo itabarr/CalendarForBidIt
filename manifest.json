@@ -8,7 +8,7 @@
     "default_popup": "popup.html",
     "default_icon": "icon.png"
   },
-  "web_accessible_resources": [{
-    "matches": ["<all_urls>"]
-  }]
+  "host_permissions": [
+    "https://www.ims.tau.ac.il/"
+  ]
 }
