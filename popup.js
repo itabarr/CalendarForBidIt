@@ -148,19 +148,24 @@ function get_another_info(bid_it_json,course_id,group_id){
 
 
 }
-function phrase_description_message(course_name,course_num, course_group, course_type, course_location, course_lecturer){
-    course_name_str = `שם קורס: ${course_name} \\n`
-    course_num_str = `מספר קורס: ${course_num} \\n`
-    course_group_str = `מספר קבוצה: ${course_group} \\n`
-    course_type_str = `סוג שיעור: ${course_type} \\n`
-    course_lecturer_str = `מרצה: ${course_lecturer} \\n`
-    course_location_str = `מיקום: ${course_location} \\n`
-    return course_name_str+course_num_str+course_group_str+course_type_str+course_lecturer_str+course_location_str
+function phrase_description_message(course_event_json){
+    course_name_str = `שם קורס: ${course_event_json.Name} \\n`
+    course_num_str = `מספר קורס: ${course_event_json.Num} \\n`
+    course_group_str = `מספר קבוצה: ${course_event_json.Group} \\n`
+    course_type_str = `סוג שיעור: ${course_event_json.Type} \\n`
+    course_lecturer_str = `מרצה: ${course_event_json.Lecturer} \\n`
+    course_location_str = `מיקום: ${course_event_json.tau_Location} \\n`
+    course_time_str = `מיקום: ${course_event_json.tau_StartHour}-${course_event_json.tau_EndHour} \\n`
+    course_bid_it_location_str = `מיקום לפי אתר bidit: ${course_event_json.bidit_Location} \\n`
+    course_bid_it_time_str = `זמן לפי אתר bidit: ${course_event_json.bidit_StartHour}-${course_event_json.bidit_EndHour} \\n`
+    course_url_str = `${course_event_json.tau_url}\\n`
+
+    return course_name_str+course_num_str+course_group_str+course_type_str+course_lecturer_str+course_location_str+course_time_str+course_bid_it_location_str+course_bid_it_time_str+course_url_str
 }
 
-//TODO: fix document query
+//TODO: fix multiple hours for one course
 async function get_updated_data_from_tau_site(course_number, course_group,year){
-    const response = await fetch(`https://www.ims.tau.ac.il/Tal/Syllabus/Syllabus_L.aspx?course=${course_number}${course_group}&year=${year}}`);
+    const response = await fetch(`https://www.ims.tau.ac.il/Tal/Syllabus/Syllabus_L.aspx?course=${course_number}${course_group}&year=${year}`);
     const reader = response.body.getReader();
     let undecoded_page;
     while (true) {
@@ -168,27 +173,27 @@ async function get_updated_data_from_tau_site(course_number, course_group,year){
         if (done) break;
         undecoded_page = value;
     }
-    console.log('Page Received');
+    //console.log('Page Received');
     page = new TextDecoder().decode(undecoded_page)
 
     var doc = new DOMParser().parseFromString(page,'text/html');
 
-    location = doc.querySelector('#div_data > div.data-table-row.course-time-location > div:nth-child(6) > span').innerText;
+    location_ = doc.querySelector('#div_data > div.data-table-row.course-time-location > div:nth-child(6) > span').innerText;
     room = doc.querySelector('#div_data > div.data-table-row.course-time-location > div:nth-child(7) > span').innerText;
     time = doc.querySelector('#div_data > div.data-table-row.course-time-location > div:nth-child(5) > span').innerText;
     url = `https://www.ims.tau.ac.il/Tal/Syllabus/Syllabus_L.aspx?course=${course_number}${course_group}&year=${year}}`;
 
     course_updated_data = {
         start_time: time.split('-')[0],
-        end_time: time.split('-')[0],
+        end_time: time.split('-')[1],
         room: room,
-        location: location,
+        location: location_,
         url: url
     }
 
     return course_updated_data
 }
-function main(result){
+async function main(result){
     let cal = ics();
 
     let data_ = JSON.parse(result.biditDisplaySettingsCookie)[0];
@@ -243,7 +248,7 @@ function main(result){
                 for (const i in arr){
 
                     another_info = get_another_info(JSON.parse(result.biditScheduleInfoCookie) , course.cNum , group.gNum);
-                    course_updated_data = get_updated_data_from_tau_site(course.cNum, group.gNum, '2021');
+                    const course_updated_data = await get_updated_data_from_tau_site(course.cNum, group.gNum, '2021');
 
                     course_event = {
                         Name: course.cName,
@@ -251,24 +256,29 @@ function main(result){
                         Group: group.gNum,
                         Type: group.ofenHoraa,
                         Day: format_days_to_string(group.daysArr[i]),
-                        StartHour: group.startHours[i],
-                        EndHour: group.endHours[i],
-                        Location: group.places[i],
+                        tau_StartHour:course_updated_data.start_time,
+                        tau_EndHour:course_updated_data.end_time,
+                        tau_Location:`${course_updated_data.location} ${course_updated_data.room}`,
+                        tau_url: course_updated_data.url,
+                        bidit_StartHour: group.startHours[i],
+                        bidit_EndHour: group.endHours[i],
+                        bidit_Location: group.places[i],
                         Lecturer: another_info.lecturer,
+
                     };
 
                     console.log(course_event, course_updated_data , another_info)
 
                     first_day_of_course = get_first_day_of_course('10/09/2021',group.daysArr[i])
-                    let formatted_start = `${first_day_of_course} ${course_event.StartHour}`
-                    let formatted_end = `${first_day_of_course} ${course_event.EndHour}`
+                    let formatted_start = `${first_day_of_course} ${course_event.tau_StartHour}`
+                    let formatted_end = `${first_day_of_course} ${course_event.tau_EndHour}`
 
-                    description_str = phrase_description_message(course_event.Name,course_event.Num ,course_event.Group, course_event.Type , course_event.Location , course_event.Lecturer)
-                    console.log(description_str)
+                    description_str = phrase_description_message(course_event)
+                    //console.log(description_str)
 
                     //console.log(get_first_day_of_course('10/09/2021',group.daysArr[i]))
 
-                    cal.addEvent(course_event.Name, description_str, course_event.Location, formatted_start ,formatted_end,{freq: 'WEEKLY', interval: 1, byday: [course_event.Day] , until:'01/09/2022'});
+                    cal.addEvent(course_event.Name, description_str, course_event.tau_Location, formatted_start ,formatted_end,{freq: 'WEEKLY', interval: 1, byday: [course_event.Day] , until:'01/09/2022'});
                 };
             };
 
