@@ -1,7 +1,7 @@
 //TODO: (1) add second semester & automatic main days (first day of semester etc.) the info is in the global vars of bidit site (bidit_globals.g_metaDatesDS.metaNames.flat() + bidit_globals.g_metaDatesDS.metaDates )
 //TODO: (1) add no events validation/notification (only tests?)
 //TODO: (2) refactor + publish
-//TODO: (3) future thoughts - add validation check for bidit hours/places (each day?) maybe needs to use server/scraper.
+//TODO: (3) future thoughts - add validation check for bidit hours/places
 
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -163,7 +163,6 @@ function phrase_description_message(course_event_json){
     return course_name_str+course_num_str+course_group_str+course_type_str+course_lecturer_str+course_location_str+course_time_str+course_bid_it_location_str+course_bid_it_time_str+course_url_str
 }
 
-//TODO: fix multiple hours for one course
 async function get_updated_data_from_tau_site(course_number, course_group,year){
     const response = await fetch(`https://www.ims.tau.ac.il/Tal/Syllabus/Syllabus_L.aspx?course=${course_number}${course_group}&year=${year}`);
     const reader = response.body.getReader();
@@ -177,22 +176,60 @@ async function get_updated_data_from_tau_site(course_number, course_group,year){
     page = new TextDecoder().decode(undecoded_page)
 
     var doc = new DOMParser().parseFromString(page,'text/html');
+    data = doc.getElementsByClassName('data-table-row course-time-location')
+    classes_ = doc.getElementsByClassName('data-table-row course-time-location');
 
-    location_ = doc.querySelector('#div_data > div.data-table-row.course-time-location > div:nth-child(6) > span').innerText;
-    room = doc.querySelector('#div_data > div.data-table-row.course-time-location > div:nth-child(7) > span').innerText;
-    time = doc.querySelector('#div_data > div.data-table-row.course-time-location > div:nth-child(5) > span').innerText;
-    url = `https://www.ims.tau.ac.il/Tal/Syllabus/Syllabus_L.aspx?course=${course_number}${course_group}&year=${year}}`;
 
-    course_updated_data = {
-        start_time: time.split('-')[0],
-        end_time: time.split('-')[1],
-        room: room,
-        location: location_,
-        url: url
+    let arr = Array.from({length: classes_.length}, (v, i) => i);
+
+    let classes_arr = [];
+    for (const i in arr){
+        elements_ = classes_[i].getElementsByClassName('data-table-cell');
+
+        let data_json = {
+          url: `https://www.ims.tau.ac.il/Tal/Syllabus/Syllabus_L.aspx?course=${course_number}${course_group}&year=${year}`
+        };
+
+        let arr_j = Array.from({length: elements_.length}, (v, i) => i);
+        for (const j in arr_j){
+            data = elements_[j].innerHTML.replace(/<\/?[^>]+(>|$)/g, " ");
+            data = data.split(/\s{2}/);
+            data = data.filter(function(entry) { return /\S/.test(entry); });
+            data = data.map(function(str_){return str_.trim()});
+
+            switch (data[0]) {
+                case 'אופן ההוראה':
+                    data_json.type = data[1];
+                    break;
+                case 'שעות סמסטריאליות':
+                    data_json.semester_hours = data[1];
+                    break;
+                case 'סמסטר':
+                    data_json.semester = data[1];
+                    break;
+                case 'יום':
+                    data_json.day = data[1];
+                    break;
+                case 'שעות':
+                    data_json.start_time = data[1].split('-')[0];
+                    data_json.end_time = data[1].split('-')[1];
+                    break;
+                case 'בניין':
+                    data_json.building = data[1];
+                    break;
+                case 'חדר':
+                    data_json.room = data[1];
+                    break;
+                default:
+                    break;
+            }
+        }
+        classes_arr.push(data_json);
     }
-
-    return course_updated_data
+    return classes_arr
 }
+
+//TODO: fix location issues + add new data from tau
 async function main(result){
     let cal = ics();
 
@@ -256,9 +293,9 @@ async function main(result){
                         Group: group.gNum,
                         Type: group.ofenHoraa,
                         Day: format_days_to_string(group.daysArr[i]),
-                        tau_StartHour:course_updated_data.start_time,
-                        tau_EndHour:course_updated_data.end_time,
-                        tau_Location:`${course_updated_data.location} ${course_updated_data.room}`,
+                        tau_StartHour:'',
+                        tau_EndHour:'',
+                        tau_Location:``,
                         tau_url: course_updated_data.url,
                         bidit_StartHour: group.startHours[i],
                         bidit_EndHour: group.endHours[i],
@@ -270,8 +307,8 @@ async function main(result){
                     console.log(course_event, course_updated_data , another_info)
 
                     first_day_of_course = get_first_day_of_course('10/09/2021',group.daysArr[i])
-                    let formatted_start = `${first_day_of_course} ${course_event.tau_StartHour}`
-                    let formatted_end = `${first_day_of_course} ${course_event.tau_EndHour}`
+                    let formatted_start = `${first_day_of_course} ${course_event.bidit_StartHour}`
+                    let formatted_end = `${first_day_of_course} ${course_event.bidit_EndHour}`
 
                     description_str = phrase_description_message(course_event)
                     //console.log(description_str)
