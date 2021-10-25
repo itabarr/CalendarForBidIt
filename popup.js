@@ -154,17 +154,15 @@ function phrase_description_message(course_event_json){
     course_group_str = `מספר קבוצה: ${course_event_json.Group} \\n`
     course_type_str = `סוג שיעור: ${course_event_json.Type} \\n`
     course_lecturer_str = `מרצה: ${course_event_json.Lecturer} \\n`
-    course_location_str = `מיקום: ${course_event_json.tau_Location} \\n`
-    course_time_str = `מיקום: ${course_event_json.tau_StartHour}-${course_event_json.tau_EndHour} \\n`
     course_bid_it_location_str = `מיקום לפי אתר bidit: ${course_event_json.bidit_Location} \\n`
     course_bid_it_time_str = `זמן לפי אתר bidit: ${course_event_json.bidit_StartHour}-${course_event_json.bidit_EndHour} \\n`
     course_url_str = `${course_event_json.tau_url}\\n`
 
-    return course_name_str+course_num_str+course_group_str+course_type_str+course_lecturer_str+course_location_str+course_time_str+course_bid_it_location_str+course_bid_it_time_str+course_url_str
+    return course_name_str+course_num_str+course_group_str+course_type_str+course_lecturer_str+course_bid_it_location_str+course_bid_it_time_str+course_url_str
 }
 
 async function get_updated_data_from_tau_site(course_number, course_group,year){
-    const response = await fetch(`https://www.ims.tau.ac.il/Tal/Syllabus/Syllabus_L.aspx?course=${course_number}${course_group}&year=${year}`);
+    const response = await fetch(`https://www.ims.tau.ac.il/Tal/Syllabus/Syllabus_L.aspx?lang=HE&course=${course_number}${course_group}&year=${year}`);
     const reader = response.body.getReader();
     let undecoded_page;
     while (true) {
@@ -187,7 +185,7 @@ async function get_updated_data_from_tau_site(course_number, course_group,year){
         elements_ = classes_[i].getElementsByClassName('data-table-cell');
 
         let data_json = {
-          url: `https://www.ims.tau.ac.il/Tal/Syllabus/Syllabus_L.aspx?course=${course_number}${course_group}&year=${year}`
+          url: `https://www.ims.tau.ac.il/Tal/Syllabus/Syllabus_L.aspx?lang=HE&course=${course_number}${course_group}&year=${year}`
         };
 
         let arr_j = Array.from({length: elements_.length}, (v, i) => i);
@@ -296,7 +294,7 @@ async function main(result){
                         tau_StartHour:'',
                         tau_EndHour:'',
                         tau_Location:``,
-                        tau_url: course_updated_data.url,
+                        tau_url: course_updated_data[0].url,
                         bidit_StartHour: group.startHours[i],
                         bidit_EndHour: group.endHours[i],
                         bidit_Location: group.places[i],
@@ -315,7 +313,7 @@ async function main(result){
 
                     //console.log(get_first_day_of_course('10/09/2021',group.daysArr[i]))
 
-                    cal.addEvent(course_event.Name, description_str, course_event.tau_Location, formatted_start ,formatted_end,{freq: 'WEEKLY', interval: 1, byday: [course_event.Day] , until:'01/09/2022'});
+                    cal.addEvent(course_event.Name, description_str, course_event.bidit_Location, formatted_start ,formatted_end,{freq: 'WEEKLY', interval: 1, byday: [course_event.Day] , until:'01/09/2022'});
                 };
             };
 
