@@ -40,11 +40,15 @@ btn.addEventListener("click", async () => {
 
 function pass_localstorage(){
     let biditDisplaySettingsCookie = localStorage.biditDisplaySettingsCookie;
-    let biditScheduleInfoCookie = localStorage.biditScheduleInfoCookie
+    let biditScheduleInfoCookie = localStorage.biditScheduleInfoCookie;
+    let biditGlobalEventsNames = bidit_globals.g_metaDatesDS.metaNames.flat();
+    let biditGlobalEventsValues = bidit_globals.g_metaDatesDS.metaDates;
 
     return localStorage_json = {
         biditDisplaySettingsCookie : biditDisplaySettingsCookie,
-        biditScheduleInfoCookie : biditScheduleInfoCookie
+        biditScheduleInfoCookie : biditScheduleInfoCookie,
+        biditGlobalEventsNames: biditGlobalEventsNames,
+        biditGlobalEventsValues: biditGlobalEventsValues
     }
 }
 function format_days_to_string(day){
@@ -226,6 +230,38 @@ async function get_updated_data_from_tau_site(course_number, course_group,year){
     }
     return classes_arr
 }
+
+//TODO: build validate data from multi sources to figure out relevant data
+function validate_data_from_multi_sources(bidit_json,tau_json){
+
+};
+
+
+function get_global_events(biditGlobalEventsNames, biditGlobalEventsValues){
+    let global_values = {};
+    biditGlobalEventsNames.forEach((name , index) => {
+        switch (name){
+            case 'היום הראשון ללימודים':
+                global_values.first_day_of_school = biditGlobalEventsValues[index];
+                break;
+            case 'היום האחרון לסמסטר הראשון':
+                global_values.last_day_of_semester_a = biditGlobalEventsValues[index];
+                break;
+            case 'היום הראשון לסמסטר השני':
+                global_values.first_day_of_semester_b = biditGlobalEventsValues[index];
+                break;
+            case 'היום האחרון לסמסטר השני':
+                global_values.last_day_of_semester_b = biditGlobalEventsValues[index];
+                break;
+            default:
+                break;
+
+            }
+        }
+    )
+
+}
+
 
 //TODO: fix location issues + add new data from tau
 async function main(result){
