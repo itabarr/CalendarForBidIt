@@ -10,5 +10,11 @@
   },
   "host_permissions": [
     "https://www.ims.tau.ac.il/"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://bid-it.appspot.com/*"],
+      "js": ["contentScript.js"]
+    }
   ]
 }

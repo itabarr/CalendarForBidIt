@@ -35,21 +35,23 @@ btn.addEventListener("click", async () => {
     });
     main(script_[0].result)
 
-    get_another_info(JSON.parse(script_[0].result.biditScheduleInfoCookie), "05091834" , '04');
+    //get_another_info(JSON.parse(script_[0].result.biditScheduleInfoCookie), "05091834" , '04');
 })
 
 function pass_localstorage(){
     let biditDisplaySettingsCookie = localStorage.biditDisplaySettingsCookie;
     let biditScheduleInfoCookie = localStorage.biditScheduleInfoCookie;
-    let biditGlobalEventsNames = bidit_globals.g_metaDatesDS.metaNames.flat();
-    let biditGlobalEventsValues = bidit_globals.g_metaDatesDS.metaDates;
-
-    return localStorage_json = {
+    let biditGlobalEventsNames = window.bidit_globals;
+    let  biditGlobalEventsValues = window.bidit_globals;
+    //console.log(window)
+    localStorage_json = {
         biditDisplaySettingsCookie : biditDisplaySettingsCookie,
         biditScheduleInfoCookie : biditScheduleInfoCookie,
         biditGlobalEventsNames: biditGlobalEventsNames,
         biditGlobalEventsValues: biditGlobalEventsValues
     }
+    //console.log(localStorage_json)
+    return localStorage_json
 }
 function format_days_to_string(day){
     switch (day) {
@@ -91,6 +93,8 @@ function format_days_to_int(day){
             throw('It seems like BidIt used incorrect day format. The day format is: ' + day);
     }
 }
+
+
 Date.prototype.addDays = function(days) {
     var date = new Date(this.valueOf());
     date.setDate(date.getDate() + days);
@@ -258,13 +262,16 @@ function get_global_events(biditGlobalEventsNames, biditGlobalEventsValues){
 
             }
         }
-    )
 
+    )
+    return global_values
 }
 
 
 //TODO: fix location issues + add new data from tau
 async function main(result){
+
+    //console.log(get_global_events(result.biditGlobalEventsNames,result.biditGlobalEventsValues))
     let cal = ics();
 
     let data_ = JSON.parse(result.biditDisplaySettingsCookie)[0];
