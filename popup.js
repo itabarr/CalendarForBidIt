@@ -3,6 +3,9 @@
 //TODO: (2) refactor + publish
 //TODO: (3) future thoughts - add validation check for bidit hours/places
 
+function mod(n, m) {
+    return ((n % m) + m) % m;
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     let [tab] = await chrome.tabs.query({active: true, currentWindow:true}) // Find current tab
@@ -38,13 +41,32 @@ btn.addEventListener("click", async () => {
     //get_another_info(JSON.parse(script_[0].result.biditScheduleInfoCookie), "05091834" , '04');
 })
 
+// window.addEventListener('DOMContentLoaded', () => {
+//     let bg = chrome.extension.getBackgroundPage();
+//     chrome.tabs.query({active:true , currentWindow:true}, (tabs) => {
+//         let currentTabId = tabs[0].id;
+//         let currentPerf = bg.perfWatch[currentTabId];
+//
+//         console.log(currentPerf)
+//     })
+// })
+
+
+window.addEventListener("message",(event)=> {
+    console.log(event)
+})
+
+
+
 function pass_localstorage(){
+    let Global_Json = JSON.parse(document.getElementById('Global_Vars').innerText);
     let biditDisplaySettingsCookie = localStorage.biditDisplaySettingsCookie;
     let biditScheduleInfoCookie = localStorage.biditScheduleInfoCookie;
     let biditGlobalEventsNames = window.bidit_globals;
     let  biditGlobalEventsValues = window.bidit_globals;
     //console.log(window)
     localStorage_json = {
+        Global_Json : Global_Json,
         biditDisplaySettingsCookie : biditDisplaySettingsCookie,
         biditScheduleInfoCookie : biditScheduleInfoCookie,
         biditGlobalEventsNames: biditGlobalEventsNames,
@@ -76,7 +98,7 @@ function format_days_to_string(day){
 function format_days_to_int(day){
     switch (day) {
         case 'א':
-            return 7;
+            return 0;
         case 'ב':
             return 1;
         case 'ג':
@@ -110,16 +132,15 @@ function get_first_day_of_course(first_day_of_school_string, course_day_of_the_w
     d.setFullYear(year,month-1,date)
 
     current_day = d.getDay()
-
-    days_diff = current_day - wanted_day_int -1
+    days_diff = mod(wanted_day_int-current_day,7)
 
     d = d.addDays(days_diff)
 
     return d.toLocaleDateString()
 
 }
-function get_another_info(bid_it_json,course_id,group_id){
-    courses = bid_it_json[0];
+function get_another_info(bid_it_json,course_id,group_id,semester){
+    courses = bid_it_json[semester];
     num_of_courses = courses.length;
     let courses_index_array = Array.from({length: num_of_courses}, (v, i) => i);
 
@@ -168,7 +189,6 @@ function phrase_description_message(course_event_json){
 
     return course_name_str+course_num_str+course_group_str+course_type_str+course_lecturer_str+course_bid_it_location_str+course_bid_it_time_str+course_url_str
 }
-
 async function get_updated_data_from_tau_site(course_number, course_group,year){
     const response = await fetch(`https://www.ims.tau.ac.il/Tal/Syllabus/Syllabus_L.aspx?lang=HE&course=${course_number}${course_group}&year=${year}`);
     const reader = response.body.getReader();
@@ -239,8 +259,6 @@ async function get_updated_data_from_tau_site(course_number, course_group,year){
 function validate_data_from_multi_sources(bidit_json,tau_json){
 
 };
-
-
 function get_global_events(biditGlobalEventsNames, biditGlobalEventsValues){
     let global_values = {};
     biditGlobalEventsNames.forEach((name , index) => {
@@ -266,7 +284,23 @@ function get_global_events(biditGlobalEventsNames, biditGlobalEventsValues){
     )
     return global_values
 }
+function parse_global_bidit_json_data(global_bidit_json){
 
+    merged_names_dates = [];
+    global_dates_names = global_bidit_json["bidit_globals"]['g_metaDatesDS']['metaNames'].flat();
+    global_dates_dates = global_bidit_json["bidit_globals"]['g_metaDatesDS']['metaDates'].flat();
+    for (var i = 0; i < global_dates_names.length; i++) {
+        merged_names_dates.push([global_dates_names[i],global_dates_dates[i]])
+    }
+    parsed_json= {
+        global_events: merged_names_dates,
+    }
+    return parsed_json
+}
+
+function swap_days_month(date){
+    return date.substr(3, 2)+"/"+date.substr(0, 2)+"/"+date.substr(6, 4);
+}
 
 //TODO: fix location issues + add new data from tau
 async function main(result){
@@ -274,97 +308,114 @@ async function main(result){
     //console.log(get_global_events(result.biditGlobalEventsNames,result.biditGlobalEventsValues))
     let cal = ics();
 
-    let data_ = JSON.parse(result.biditDisplaySettingsCookie)[0];
-    //console.log(Object.keys(data_));
-
-    for (const course_key in data_){
-        let course = data_[course_key]
-        let groups = course['groups'];
-
-        let num_of_tests = course.moeds.length;
-        let arr_ = Array.from({length: num_of_tests}, (v, i) => i);
+    global_events = parse_global_bidit_json_data(result.Global_Json)['global_events']
+    first_day_of_sem_A = global_events[0][1];
+    first_day_of_sem_B =global_events[5][1];
+    last_day_of_sem_A = global_events[2][1]
+    last_day_of_sem_B = global_events[11][1]
 
 
-        for (const i in arr_){
-            start_str = (course.startMoedHours[i]);
-            start_int = parseInt(start_str.substring(0,2));
-            let end_int = start_int + 3;
-            d = new Date();
-            d.setHours(end_int)
-            end_hours_str = `${d.getHours().toString()}:00`
-
-            dateString = course.dates[i];
-            date_str = dateString.substr(3, 2)+"/"+dateString.substr(0, 2)+"/"+dateString.substr(6, 4);
-
-
-            test_event ={
-                Name: course.cName,
-                Moed : course.moeds[i],
-                Type : course.types[i],
-                StartHour : course.startMoedHours[i],
-                EndHour: end_hours_str,
-                Day : date_str
-            }
-
-            let formatted_start =  `${test_event.Day} ${test_event.StartHour}`
-            let formatted_end = `${test_event.Day} ${test_event.EndHour}`
-
-            test_event.formatted_start = formatted_start;
-            test_event.formatted_end = formatted_end;
-
-            //console.log(test_event);
-            cal.addEvent(  'מועד ' + test_event.Moed +' '+ test_event.Name, test_event.Moed  , "", formatted_start ,formatted_end);
-
+    for (var i = 0; i < JSON.parse(result.biditDisplaySettingsCookie).length; i++) {
+        semester_num = i;
+        if (i ==0){
+            first_day = first_day_of_sem_A
+            last_day = last_day_of_sem_A
+        }
+        else{
+            first_day =first_day_of_sem_B
+            last_day = last_day_of_sem_B
         }
 
-        for (const group_key in groups){
-            let group = groups[group_key]
-            if (group['gChosen'] == true){
-                const num_of_days = group.daysArr.length
+        //Semester A and B loop
+        let data_ = JSON.parse(result.biditDisplaySettingsCookie)[i];
+        for (const course_key in data_){
+            let course = data_[course_key]
+            let groups = course['groups'];
 
-                let arr = Array.from({length: num_of_days}, (v, i) => i);
-                for (const i in arr){
+            let num_of_tests = course.moeds.length;
+            let arr_ = Array.from({length: num_of_tests}, (v, i) => i);
 
-                    another_info = get_another_info(JSON.parse(result.biditScheduleInfoCookie) , course.cNum , group.gNum);
-                    const course_updated_data = await get_updated_data_from_tau_site(course.cNum, group.gNum, '2021');
+            //Add test event loop
+            for (const i in arr_){
+                start_str = (course.startMoedHours[i]);
+                start_int = parseInt(start_str.substring(0,2));
+                let end_int = start_int + 3;
+                d = new Date();
+                d.setHours(end_int)
+                end_hours_str = `${d.getHours().toString()}:00`
 
-                    course_event = {
-                        Name: course.cName,
-                        Num: course.cNum,
-                        Group: group.gNum,
-                        Type: group.ofenHoraa,
-                        Day: format_days_to_string(group.daysArr[i]),
-                        tau_StartHour:'',
-                        tau_EndHour:'',
-                        tau_Location:``,
-                        tau_url: course_updated_data[0].url,
-                        bidit_StartHour: group.startHours[i],
-                        bidit_EndHour: group.endHours[i],
-                        bidit_Location: group.places[i],
-                        Lecturer: another_info.lecturer,
+                dateString = course.dates[i];
+                date_str = swap_days_month(dateString)
 
+
+                test_event ={
+                    Name: course.cName,
+                    Moed : course.moeds[i],
+                    Type : course.types[i],
+                    StartHour : course.startMoedHours[i],
+                    EndHour: end_hours_str,
+                    Day : date_str
+                }
+
+                let formatted_start =  `${test_event.Day} ${test_event.StartHour}`
+                let formatted_end = `${test_event.Day} ${test_event.EndHour}`
+
+                test_event.formatted_start = formatted_start;
+                test_event.formatted_end = formatted_end;
+
+                //console.log(test_event);
+                cal.addEvent(  'מועד ' + test_event.Moed +' '+ test_event.Name, test_event.Moed  , "", formatted_start ,formatted_end);
+
+            }
+
+            for (const group_key in groups){
+                let group = groups[group_key]
+                if (group['gChosen'] == true){
+                    const num_of_days = group.daysArr.length
+
+                    let arr = Array.from({length: num_of_days}, (v, i) => i);
+                    for (const i in arr){
+
+                        another_info = get_another_info(JSON.parse(result.biditScheduleInfoCookie) , course.cNum , group.gNum ,semester_num);
+                        const course_updated_data = await get_updated_data_from_tau_site(course.cNum, group.gNum, '2021');
+
+                        course_event = {
+                            Name: course.cName,
+                            Num: course.cNum,
+                            Group: group.gNum,
+                            Type: group.ofenHoraa,
+                            Day: format_days_to_string(group.daysArr[i]),
+                            tau_StartHour:'',
+                            tau_EndHour:'',
+                            tau_Location:``,
+                            tau_url: course_updated_data[0].url,
+                            bidit_StartHour: group.startHours[i],
+                            bidit_EndHour: group.endHours[i],
+                            bidit_Location: group.places[i],
+                            Lecturer: another_info.lecturer,
+
+                        };
+
+                        console.log(course_event, course_updated_data , another_info)
+
+                        first_day_of_course = get_first_day_of_course(first_day,group.daysArr[i])
+                        let formatted_start = `${first_day_of_course} ${course_event.bidit_StartHour}`
+                        let formatted_end = `${first_day_of_course} ${course_event.bidit_EndHour}`
+
+                        description_str = phrase_description_message(course_event)
+
+                        cal.addEvent(course_event.Name, description_str, course_event.bidit_Location, formatted_start ,formatted_end,{freq: 'WEEKLY', interval: 1, byday: [course_event.Day] , until: last_day});
                     };
-
-                    console.log(course_event, course_updated_data , another_info)
-
-                    first_day_of_course = get_first_day_of_course('10/09/2021',group.daysArr[i])
-                    let formatted_start = `${first_day_of_course} ${course_event.bidit_StartHour}`
-                    let formatted_end = `${first_day_of_course} ${course_event.bidit_EndHour}`
-
-                    description_str = phrase_description_message(course_event)
-                    //console.log(description_str)
-
-                    //console.log(get_first_day_of_course('10/09/2021',group.daysArr[i]))
-
-                    cal.addEvent(course_event.Name, description_str, course_event.bidit_Location, formatted_start ,formatted_end,{freq: 'WEEKLY', interval: 1, byday: [course_event.Day] , until:'01/09/2022'});
                 };
-            };
 
+            }
         }
     }
     var d = new Date();
     cal.download(d.toISOString())
 }
+
+
 
 
 

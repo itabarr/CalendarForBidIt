@@ -1,15 +1,15 @@
-let biditDisplaySettingsCookie = localStorage.biditDisplaySettingsCookie;
-let biditScheduleInfoCookie = localStorage.biditScheduleInfoCookie;
-let biditGlobalEventsNames = window.bidit_globals;
-let  biditGlobalEventsValues = window.bidit_globals;
-//console.log(window)
-localStorage_json = {
-    biditDisplaySettingsCookie : biditDisplaySettingsCookie,
-    biditScheduleInfoCookie : biditScheduleInfoCookie,
-    biditGlobalEventsNames: biditGlobalEventsNames,
-    biditGlobalEventsValues: biditGlobalEventsValues
-}
+var extension_id = document.createElement('div');
+extension_id.id = chrome.runtime.id;
+extension_id.setAttribute('name','extension_id');
+
+
+var s = document.createElement('script');
+s.src = chrome.runtime.getURL('script.js');
+s.onload = function() {
+    this.remove();
+};
+(document.head || document.documentElement).appendChild(s);
 
 
 
-console.log(chrome.runtime.id)
+

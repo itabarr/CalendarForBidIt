@@ -16,5 +16,14 @@
       "matches": ["https://bid-it.appspot.com/*"],
       "js": ["contentScript.js"]
     }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [ "script.js" ],
+      "matches": [ "https://bid-it.appspot.com/*" ]
+    }
   ]
 }
