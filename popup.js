@@ -302,7 +302,7 @@ function swap_days_month(date){
     return date.substr(3, 2)+"/"+date.substr(0, 2)+"/"+date.substr(6, 4);
 }
 
-//TODO: fix location issues + add new data from tau
+//TODO: fix location issues
 async function main(result){
 
     //console.log(get_global_events(result.biditGlobalEventsNames,result.biditGlobalEventsValues))
