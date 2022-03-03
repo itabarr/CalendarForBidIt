@@ -1,9 +1,9 @@
 {
-  "name": "CalendarForBidIt",
+  "name": " BidIt to ICS",
   "description": "Download bid-it calendar as .ics file.",
   "version": "1.0",
   "manifest_version": 3,
-  "permissions": ["storage", "activeTab", "scripting","tabs","cookies"],
+  "permissions": ["activeTab", "scripting"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": "icon.png"
@@ -22,5 +22,8 @@
       "resources": [ "script.js" ],
       "matches": [ "https://bid-it.appspot.com/*" ]
     }
-  ]
+  ],
+  "icons": { "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png" }
 }
