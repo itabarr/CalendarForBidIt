@@ -1,4 +1,4 @@
-# CalendarForBidIt
+# BidIt to ICS
 
 This is a google extention service that lets you save calendar information from https://bid-it.appspot.com/ (Tel Aviv university calendar-managing website) into an ".ics" (Icalendar) file.
 
