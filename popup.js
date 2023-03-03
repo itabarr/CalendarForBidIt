@@ -140,7 +140,11 @@ async function main(result){
                     for (const i in arr){
 
                         let another_info = bidit.get_another_info(JSON.parse(result.biditScheduleInfoCookie) , course.cNum , group.gNum ,semester_num);
-                        const course_updated_data = await bidit.get_updated_data_from_tau_site(course.cNum, group.gNum, '2021');
+                        const course_updated_data = await bidit.get_updated_data_from_tau_site(course.cNum, group.gNum, '2022');
+                        let url = '';
+                        if (course_updated_data.length > 0){
+                            url = course_updated_data[0].url;
+                        }
 
                         let course_event = {
                             Name: course.cName,
@@ -151,7 +155,7 @@ async function main(result){
                             tau_StartHour:'',
                             tau_EndHour:'',
                             tau_Location:``,
-                            tau_url: course_updated_data[0].url,
+                            tau_url: url,
                             bidit_StartHour: group.startHours[i],
                             bidit_EndHour: group.endHours[i],
                             bidit_Location: group.places[i],
