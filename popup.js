@@ -74,7 +74,7 @@ async function main(result){
 
     let global_events = bidit.parse_global_bidit_json_data(result.Global_Json)['global_events']
     let first_day_of_sem_A = global_events[0][1];
-    let first_day_of_sem_B =global_events[5][1];
+    let first_day_of_sem_B = "03/12/2023";
     let last_day_of_sem_A = global_events[2][1]
     let last_day_of_sem_B = global_events[11][1]
 
